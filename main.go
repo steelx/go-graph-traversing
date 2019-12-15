@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"strings"
 )
 
 func main() {
@@ -23,7 +24,8 @@ func main() {
 	g.AddEdge("manish", "francesc")
 	g.AddEdge("manish", "albert")
 
-	g.BFS("francesc")
+	g.DFS("francesc")
+	g.CreatePath("francesc", "albert")
 }
 
 func NewGraph() Graph {
@@ -31,10 +33,10 @@ func NewGraph() Graph {
 		adjacency: make(map[string][]string),
 	}
 }
+
 type Graph struct {
 	adjacency map[string][]string
 }
-
 
 func (g *Graph) AddVertex(vertex string) bool {
 	if _, ok := g.adjacency[vertex]; ok {
@@ -69,7 +71,7 @@ func (g Graph) BFS(startingNode string) {
 	for len(q) > 0 {
 		var current string
 		current, q = q[0], q[1:]
-		fmt.Println("visiting node", current)
+		fmt.Println("BFS", current)
 		for _, node := range g.adjacency[current] {
 			if !visited[node] {
 				q = append(q, node)
@@ -79,6 +81,52 @@ func (g Graph) BFS(startingNode string) {
 	}
 }
 
+func (g Graph) DFS(startingNode string) {
+	visited := g.createVisited()
+	g.dfsRecursive(startingNode, visited)
+}
+
+func (g Graph) dfsRecursive(startingNode string, visited map[string]bool) {
+	visited[startingNode] = true
+	fmt.Println("DFS", startingNode)
+	for _, node := range g.adjacency[startingNode] {
+		if !visited[node] {
+			g.dfsRecursive(node, visited)
+		}
+	}
+}
+
+func (g Graph) CreatePath(firstNode, secondNode string) bool {
+	visited := g.createVisited()
+	var (
+		path []string
+		q    []string
+	)
+	q = append(q, firstNode)
+	visited[firstNode] = true
+
+	for len(q) > 0 {
+		var currentNode string
+		currentNode, q = q[0], q[1:]
+		path = append(path, currentNode)
+		edges := g.adjacency[currentNode]
+		if contains(edges, secondNode) {
+			path = append(path, secondNode)
+			fmt.Println(strings.Join(path, "->"))
+			return true
+		}
+
+		for _, node := range g.adjacency[currentNode] {
+			if !visited[node] {
+				visited[node] = true
+				q = append(q, node)
+			}
+		}
+	}
+	fmt.Println("no link found")
+	return false
+}
+
 func (g Graph) createVisited() map[string]bool {
 	visited := make(map[string]bool, len(g.adjacency))
 	for key := range g.adjacency {
@@ -86,7 +134,6 @@ func (g Graph) createVisited() map[string]bool {
 	}
 	return visited
 }
-
 
 func contains(slice []string, item string) bool {
 	set := make(map[string]struct{}, len(slice))
